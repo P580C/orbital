@@ -21,11 +21,12 @@
   
   orbital has a roadmap, the things still to do are...
   
-  1. Move trig calculations into external class.
-  2. Add ability to change sequence length.
-  3. Add up to 4 sequences.
-  4. Test out different engines / using samples.
-  5. Possibly change the name.
+  - move trig calculations into external class
+  - add ability to change sequence length
+  - add up to 4 sequences
+  - test out different engines / using samples
+  - possibly change the name
+  - get loading and saving of sequence data into an external data file
   
   only then will orbital be considered release 1
   
