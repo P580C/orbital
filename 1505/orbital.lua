@@ -18,6 +18,9 @@
   
   it is very much a work in progress
   the code is messy, the capability small
+
+  designed for polyperc, but Haven sounds immense
+  my own engines are being worked on
   
   orbital has a roadmap, the things still to do are...
   
@@ -27,6 +30,7 @@
   - test out different engines / using samples
   - possibly change the name
   - get loading and saving of sequence data into an external data file
+  - possibly rotate a marker instead of the circles to make it easier to read - less cool though
   
   only then will orbital be considered release 1
   
