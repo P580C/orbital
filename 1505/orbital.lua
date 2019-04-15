@@ -66,6 +66,7 @@ local orbitalCircle = include('lib/orbital_circle')
 
 local c1Sequence = {1, 2, 1, 3, 2, 4, 1, 2, 1, 4, 1, 6, 3, 2, 1, 1}
 local c1
+local c2
 
 
 --  get things started
@@ -74,7 +75,10 @@ function init()
   screen.aa(1)
   
   c1 = orbitalCircle.new(20, 42, 18, 1.7, 16, 62, 15, c1Sequence)
-  --c1:updateBPM(120)
+  c2 = orbitalCircle.new(30, 42, 18, 1.7, 16, 62, 15, c1Sequence)
+  
+  print("c1 should return 4: "..c1.testFunc(2))
+  print("c2 should return 8: "..c1.testFunc(4))
 
   -- create a random sequence to start with
   for i=1,initSequence.length do
@@ -178,7 +182,7 @@ end
 function redraw()
   screen.clear()
 
-  --c1:redraw()
+  c1.redraw()
 	
 	screen.level(4)
 	screen.rect(0,0,128,64)

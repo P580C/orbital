@@ -1,57 +1,51 @@
 local Orbital_Circle = {}
 
--- set up variables
-local xPos
-local yPos
-local circleDiameter
-local scalingFactor
-local numberOfNotes
-local spaceBetweenNotes
-local beatsPerSecond
-local currentRotation
-local framesPerSecond
-local framesPerFullRotation
-local degreesPerFrame
-local newRotationValue
-local sequenceData
+function Orbital_Circle.new(x, y, diameter, scale_factor, number_of_notes, beats_per_minute, frames_per_second, sequence_data)
+	local orbitalCircle = {}
 
-function Orbital_Circle.new(x, y, diameter, scale_factor, number_of_notes, beats_per_second, frames_per_second, sequence_data)
-	print("Orbital_Circle running")
-	xPos = x
-	yPos = y
-	circleDiameter = diameter
-	scalingFactor = scale_factor
-	numberOfNotes = number_of_notes
-	spaceBetweenNotes = number_of_notes / 360
-	beatsPerSecond = beats_per_second
-	currentRotation = 0
-	framesPerSecond = frames_per_second
-	framesPerFullRotation = (number_of_notes/beats_per_second)+frames_per_second
-	degreesPerFrame = 360 / framesPerFullRotation
-	newRotationValue = currentRotation + degreesPerFrame
-	sequenceData = sequence_data
-end
+  print("Orbital_Circle running")
+	orbitalCircle.xPos = x or 0
+	orbitalCircle.yPos = y or 0
+	orbitalCircle.circleDiameter = diameter or 10
+	orbitalCircle.scalingFactor = scale_factor or 1.7
+	orbitalCircle.numberOfNotes = number_of_notes or 16
+	orbitalCircle.spaceBetweenNotes = number_of_notes / 360
+	orbitalCircle.beatsPerSecond = (beats_per_minute / 60) or 120
+	orbitalCircle.currentRotation = 0
+	orbitalCircle.framesPerSecond = frames_per_second or 15
+	orbitalCircle.framesPerFullRotation = (orbitalCircle.numberOfNotes/orbitalCircle.beatsPerSecond)+orbitalCircle.framesPerSecond
+	orbitalCircle.degreesPerFrame = 360 / orbitalCircle.framesPerFullRotation
+	orbitalCircle.newRotationValue = orbitalCircle.currentRotation + orbitalCircle.degreesPerFrame
+	orbitalCircle.sequenceData = sequence_data
+	
+	function orbitalCircle.testFunc(param)
+		local p = param
+		return p * 2
+	end
+	
+	function orbitalCircle.updateNotes(sequence_data)
+		orbitalCircle.sequenceData = sequence_data
+	end
+	
+	function orbitalCircle.updateBPM(beats_per_minute)
+		orbitalCircle.beatsPerSecond = beats_per_minute/60
+		print("Updated BPS to: " .. orbitalCircle.beatsPerSecond)
+	end
 
-function Orbital_Circle:updateNotes(sequence_data)
-	self.sequenceData = sequence_data
-end
-
-function Orbital_Circle:updateBPM(beats_per_minute)
-	self.beatsPerSecond = beats_per_minute/60
-	print("Updated BPS to: " .. self.beatsPerSecond)
-end
-
-function Orbital_Circle:redraw()
-	for i=1,self.numberOfNotes do
-		if self.sequenceData[i] > 0 then
-			screen.circle(
-			math.cos(math.rad(self.newRotationValue)+(self.spaceBetweenNotes*i))*self.circleDiameter + self.xPos,
-			math.sin(math.rad(self.newRotationValue)+(self.spaceBetweenNotes*i))*self.circleDiameter + self.yPos,
-			self.sequenceData[i]/self.scalingFactor
-			)
-		screen.fill()
+	function orbitalCircle.redraw()
+		for i=1,orbitalCircle.numberOfNotes do
+			if orbitalCircle.sequenceData[i] > 0 then
+				screen.circle(
+					math.cos(math.rad(orbitalCircle.newRotationValue)+(orbitalCircle.spaceBetweenNotes*i))*orbitalCircle.circleDiameter + orbitalCircle.xPos,
+					math.sin(math.rad(orbitalCircle.newRotationValue)+(orbitalCircle.spaceBetweenNotes*i))*orbitalCircle.circleDiameter + orbitalCircle.yPos,
+					orbitalCircle.sequenceData[i] / orbitalCircle.scalingFactor
+				)
+			screen.fill()
+			end
 		end
 	end
+
+	return orbitalCircle
 end
 
 return Orbital_Circle
