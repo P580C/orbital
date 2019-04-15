@@ -1,4 +1,4 @@
-Orbital_Circle = {}
+local Orbital_Circle = {}
 
 -- set up variables
 local xPos
@@ -15,8 +15,8 @@ local degreesPerFrame
 local newRotationValue
 local sequenceData
 
-
 function Orbital_Circle.new(x, y, diameter, scale_factor, number_of_notes, beats_per_second, frames_per_second, sequence_data)
+	print("Orbital_Circle running")
 	xPos = x
 	yPos = y
 	circleDiameter = diameter
@@ -33,20 +33,21 @@ function Orbital_Circle.new(x, y, diameter, scale_factor, number_of_notes, beats
 end
 
 function Orbital_Circle:updateNotes(sequence_data)
-	sequenceData = sequence_data
+	self.sequenceData = sequence_data
 end
 
-function Orbital_Circle:updateBPM(beats_per_second)
-	beatsPerSecond = beats_per_second
+function Orbital_Circle:updateBPM(beats_per_minute)
+	self.beatsPerSecond = beats_per_minute/60
+	print("Updated BPS to: " .. self.beatsPerSecond)
 end
 
 function Orbital_Circle:redraw()
-	for i=1,numberOfNotes do
-		if sequenceData[i] > 0 then
+	for i=1,self.numberOfNotes do
+		if self.sequenceData[i] > 0 then
 			screen.circle(
-			math.cos(math.rad(newRotationValue)+(spaceBetweenNotes*i))*circleDiameter + xPos,
-			math.sin(math.rad(newRotationValue)+(spaceBetweenNotes*i))*circleDiameter + yPos,
-			sequenceData[i]/scalingFactor
+			math.cos(math.rad(self.newRotationValue)+(self.spaceBetweenNotes*i))*self.circleDiameter + self.xPos,
+			math.sin(math.rad(self.newRotationValue)+(self.spaceBetweenNotes*i))*self.circleDiameter + self.yPos,
+			self.sequenceData[i]/self.scalingFactor
 			)
 		screen.fill()
 		end

@@ -60,12 +60,22 @@ local beatsPerSecond
 local framesPerFullRotation
 local degreesPerFrame
 
+-- testing oop
+local orbitalCircle = include('lib/orbital_circle')
+-- orbital_circle requires x, y, diameter, scale_factor, number_of_notes, beats_per_second, frames_per_second, sequence_data
+
+local c1Sequence = {1, 2, 1, 3, 2, 4, 1, 2, 1, 4, 1, 6, 3, 2, 1, 1}
+local c1
+
 
 --  get things started
 function init()
   -- set screen antialiasing level
   screen.aa(1)
   
+  c1 = orbitalCircle.new(20, 42, 18, 1.7, 16, 62, 15, c1Sequence)
+  --c1:updateBPM(120)
+
   -- create a random sequence to start with
   for i=1,initSequence.length do
     freqs[i] = (math.random(2, 512))
@@ -138,7 +148,6 @@ function key (n,z)
         screen_refresh_metro:stop()
       else
         startStop = true
-        --clk:start()
         audioMetro:start(60/bbppmm)
         screen_refresh_metro:start(1/framesPerSecond)
       end
@@ -168,6 +177,8 @@ end
 -- drawing the graphical interface
 function redraw()
   screen.clear()
+
+  --c1:redraw()
 	
 	screen.level(4)
 	screen.rect(0,0,128,64)
@@ -188,7 +199,7 @@ function redraw()
     screen.fill()
     end
   end
-	screen.update()
+  screen.update()
 end
 
 -- function to create a new random sequence, called when button three is pushed
