@@ -2,6 +2,8 @@
 -- alpha version 1.1
 -- p1505
 --
+-- enc 1 chooses sequence
+--
 -- btn 2 randomises sequence
 -- enc 2 changes pitch
 --
@@ -27,6 +29,7 @@
   - add ability to change sequence length
   - add ability to manually edit sequences
   - get loading and saving of sequence data into an external data file
+  - ability to have different BPM on each sequence
   - add an external params file for setting frequency ranges etc
 
   only then will orbital be considered release 1
@@ -47,19 +50,16 @@ local screen_refresh_metro
 local audioMetro
 local bbppmm  -- the beats per minute of the track
 local framesPerSecond = 15
-local selectedSequence = 2
+local selectedSequence = 1
 
 -- default sequences
---local initSequence = {pos = 0, length = 16, data = {1,2,1,2,1,1,2,1,2,1,2,1,2,1,2,1}}
-local sequences = {}
-
 local sequences = {
   c1Sequence = {pos = 0, length = 16, data = {1, 2, 1, 3, 2, 4, 1, 2, 1, 4, 1, 6, 3, 2, 1, 1}},
   c2Sequence = {pos = 0, length = 16, data = {1, 2, 1, 3, 2, 4, 1, 2, 1, 4, 1, 6, 3, 2, 1, 1}}
 }
 
 local orbitalCircle = include('lib/orbital_circle')
--- orbital_circle requires x, y, diameter, scale_factor, number_of_notes, beats_per_second, frames_per_second, sequence_data
+-- orbital_circle requires x, y, diameter, scale_factor, number_of_notes, beats_per_second, frames_per_second, sequence_data, sequence type "treb" or "bass"
 
 local circles = {c1, c2}
 
@@ -72,12 +72,12 @@ function init()
   -- set the bpm to a default value
   bbppmm = 120
 
+  circles.c1 = orbitalCircle.new(38, 28, 16, 16, 120, 15, sequences.c1Sequence.data, "treb")
+  circles.c2 = orbitalCircle.new(90, 28, 16, 16, 120, 15, sequences.c2Sequence.data, "bass")
+
   -- fill the sequences with a new random set
   randomSequence()
 
-  circles.c1 = orbitalCircle.new(38, 32, 16, 16, 120, 15, sequences.c1Sequence.data)
-  circles.c2 = orbitalCircle.new(38, 32, 16, 16, 120, 15, sequences.c2Sequence.data)
-  
   -- we use a metro to trigger n times per second (frameRate)
   screen_refresh_metro = metro.init()
   screen_refresh_metro.event = function()
@@ -141,25 +141,35 @@ function enc(n,d)
 
   elseif n == 2 then
     if d == -1 then
-      -- reduce the frequences on circle 1 by 10 for every encoder click unless the lowest number in the table <= 32
-      if math.min(table.unpack(sequences.c1Sequence.data)) > 32 then
+      if selectedSequence == 1 then
+        if math.min(table.unpack(sequences.c1Sequence.data)) > 32 then
+          for i, v in ipairs(sequences.c1Sequence.data) do
+            sequences.c1Sequence.data[i] = v - 10
+          end
+        end
+      elseif selectedSequence == 2 then
+        if math.min(table.unpack(sequences.c2Sequence.data)) > 2 then
+          for i, v in ipairs(sequences.c2Sequence.data) do
+            sequences.c2Sequence.data[i] = v - 2
+          end
+        end
+      end
+    elseif d == 1 then
+      if selectedSequence == 1 then
         for i, v in ipairs(sequences.c1Sequence.data) do
-          sequences.c1Sequence.data[i] = v - 10
+          sequences.c1Sequence.data[i] = v + 10
         end
-      end
-      -- reduce the frequences on circle 2 by 2 for every encoder click unless the lowest number in the table <= 2
-      if math.min(table.unpack(sequences.c2Sequence.data)) > 2 then
+      elseif selectedSequence == 2 then
         for i, v in ipairs(sequences.c2Sequence.data) do
-          sequences.c2Sequence.data[i] = v - 2
+          sequences.c2Sequence.data[i] = v + 2
         end
       end
+    end
+  else  -- must be encoder 1
+    if d == -1 then
+      selectedSequence = 1
     else
-      for i, v in ipairs(sequences.c1Sequence.data) do
-        sequences.c1Sequence.data[i] = v + 10
-      end
-      for i, v in ipairs(sequences.c2Sequence.data) do
-        sequences.c2Sequence.data[i] = v + 2
-      end
+      selectedSequence = 2
     end
   end
 end
@@ -173,14 +183,14 @@ function redraw()
   screen.level(1)
   
   if selectedSequence == 1 then
-    screen.circle(circles.c1.location()[1], circles.c1.location()[2]+25, 2)
+    screen.circle(circles.c1.location()[1], circles.c1.location()[2]+28, 2)
     screen.fill()
-    screen.circle(circles.c2.location()[1], circles.c2.location()[2]+25, 2)
+    screen.circle(circles.c2.location()[1], circles.c2.location()[2]+28, 2)
     screen.stroke()
   else
-    screen.circle( circles.c1.location()[1], circles.c1.location()[2]+25, 2)
+    screen.circle( circles.c1.location()[1], circles.c1.location()[2]+28, 2)
     screen.stroke()
-    screen.circle(circles.c2.location()[1], circles.c2.location()[2]+25, 2)
+    screen.circle(circles.c2.location()[1], circles.c2.location()[2]+28, 2)
     screen.fill()
   end
 
@@ -196,6 +206,6 @@ function randomSequence()
     sequences.c2Sequence.data[i] = (math.random(5, 128))
   end
   circles.c1.updateNotes(sequences.c1Sequence.data)
-  circles.c2.updateNotes(sequences.c1Sequence.data)
+  circles.c2.updateNotes(sequences.c2Sequence.data)
   redraw()
 end

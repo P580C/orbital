@@ -1,6 +1,6 @@
 local Orbital_Circle = {}
 
-function Orbital_Circle.new(x, y, diameter, number_of_notes, beats_per_minute, frames_per_second, sequence_data)
+function Orbital_Circle.new(x, y, diameter, number_of_notes, beats_per_minute, frames_per_second, sequence_data, type)
 	local orbitalCircle = {}
 
 	orbitalCircle.xPos = x or 0
@@ -15,13 +15,7 @@ function Orbital_Circle.new(x, y, diameter, number_of_notes, beats_per_minute, f
 	orbitalCircle.degreesPerFrame = 360 / orbitalCircle.framesPerFullRotation
 	orbitalCircle.newRotationValue = orbitalCircle.currentRotation + orbitalCircle.degreesPerFrame
 	orbitalCircle.sequenceData = sequence_data
-
-	--[[
-	function orbitalCircle.testFunc(param)
-		local p = param
-		return p * 2
-	end
-	]]
+	orbitalCircle.type = type
 
 	function orbitalCircle.updateNotes(sq)
 		orbitalCircle.sequenceData = sq
@@ -47,14 +41,21 @@ function Orbital_Circle.new(x, y, diameter, number_of_notes, beats_per_minute, f
 	function orbitalCircle.redraw()
 		for i=1,orbitalCircle.numberOfNotes do
 			if orbitalCircle.sequenceData[i] > 0 then
-				screen.circle(
-					math.cos(math.rad(orbitalCircle.newRotationValue)+(orbitalCircle.spaceBetweenNotes*i))*orbitalCircle.circleDiameter + orbitalCircle.xPos,
-					math.sin(math.rad(orbitalCircle.newRotationValue)+(orbitalCircle.spaceBetweenNotes*i))*orbitalCircle.circleDiameter + orbitalCircle.yPos,
-					map(orbitalCircle.sequenceData[i])
-					--util.clamp(((orbitalCircle.sequenceData[i] - 32) / (512 - 32) * (12 - 2) + 2), 2, 12)
-					--((orbitalCircle.sequenceData[i] - 32) / (512 - 32) * (12 - 2) + 2)
-				)
-				screen.fill()
+				if type == "treb" then
+					screen.circle(
+						math.cos(math.rad(orbitalCircle.newRotationValue)+(orbitalCircle.spaceBetweenNotes*i))*orbitalCircle.circleDiameter + orbitalCircle.xPos,
+						math.sin(math.rad(orbitalCircle.newRotationValue)+(orbitalCircle.spaceBetweenNotes*i))*orbitalCircle.circleDiameter + orbitalCircle.yPos,
+						map(orbitalCircle.sequenceData[i])
+					)
+					screen.fill()
+				else
+					screen.circle(
+						math.cos(math.rad(orbitalCircle.newRotationValue)+(orbitalCircle.spaceBetweenNotes*i))*orbitalCircle.circleDiameter + orbitalCircle.xPos,
+						math.sin(math.rad(orbitalCircle.newRotationValue)+(orbitalCircle.spaceBetweenNotes*i))*orbitalCircle.circleDiameter + orbitalCircle.yPos,
+						map(orbitalCircle.sequenceData[i] * 2)
+					)
+					screen.stroke()
+				end
 				screen.update()
 			end
 		end
