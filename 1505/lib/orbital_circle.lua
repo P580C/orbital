@@ -39,6 +39,7 @@ function Orbital_Circle.new(x, y, diameter, number_of_notes, beats_per_minute, f
 	end
 
 	function orbitalCircle.redraw()
+		screen.level(2)
 		for i=1,orbitalCircle.numberOfNotes do
 			if orbitalCircle.sequenceData[i] > 0 then
 				if type == "treb" then
