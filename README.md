@@ -13,9 +13,9 @@ orbital has a roadmap, the things still to do are...
 
 - move trig calculations into external class - done.
 - add ability to change sequence length - do to.
-- add up to 4 sequences - this was canned due to UI limitations, it will come in a future script. For now you cna have two sequences and have control over the frequencies of each. For now the left is treble, the right is bass.
+- add up to 4 sequences - this was canned due to UI limitations, it will come in a future script. For now you can have two sequences and have control over the frequencies of each. For now the left is treble, the right is bass.
 - get saving and loading of sequence data into an external file - done but I will test heavily before release.
-- set BPM on each sequence indivdually - again, done but want to test more. It's causing screen flickers.
+- set BPM on each sequence indivdually - done.
 
 only then will orbital be considered release 1
 
