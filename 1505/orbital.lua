@@ -26,11 +26,12 @@
 
   orbital has a roadmap, the things still to do are...
 
-  - fix a bug where pausing the playback stops the screen updating
+  - fix a bug where pausing the playback stops the screen updating - done
+  - move screen redraw metro into circle class - done
+  - fix a bug where updating BPM paused playback and screen update - done
   - add ability to change sequence length
   - add ability to manually edit sequences
   - get loading and saving of sequence data into an external data file
-  - ability to have different BPM on each sequence - done
   - add an external params file for setting frequency ranges etc
 
   only then will orbital be considered release 1
@@ -48,7 +49,6 @@ engine.name = "PolyPerc"
 --local freqs = {}
 local startStop = true
 local screen_refresh_metro
-local audioMetro
 local seqOneMetro
 local seqTwoMetro
 local seqOneBPM
@@ -79,17 +79,17 @@ function init()
   seqTwoBPM = 120
   bbppmm = 120
 
-  circles.c1 = orbitalCircle.new(38, 28, 16, 16, 120, 15, sequences.c1Sequence.data, "treb")
-  circles.c2 = orbitalCircle.new(90, 28, 16, 16, 120, 15, sequences.c2Sequence.data, "bass")
+  circles.c1 = orbitalCircle.new(38, 32, 16, 16, 120, 15, sequences.c1Sequence.data, "treb")
+  circles.c2 = orbitalCircle.new(90, 32, 16, 16, 120, 15, sequences.c2Sequence.data, "bass")
 
   -- fill the sequences with a new random set
-  randomSequence()
+  randomSequence("all")
 
   -- we use a metro to trigger n times per second (frameRate)
   screen_refresh_metro = metro.init()
   screen_refresh_metro.event = function()
-    circles.c1.tick()
-    circles.c2.tick()
+    --circles.c1.tick()
+    --circles.c2.tick()
 
     redraw()
   end
@@ -110,28 +110,7 @@ function init()
 
   seqOneMetro:start(60/bbppmm)
   seqTwoMetro:start(60/bbppmm)
-  
-
---[[
-  audioMetro = metro.init()
-  audioMetro.event = function()
-    step()
-  end
-  audioMetro:start(60/bbppmm)
-  ]]
 end
-
--- every time our clock triggers
---[[
-function step()
-  sequences.c1Sequence.pos = sequences.c1Sequence.pos + 1
-  if sequences.c1Sequence.pos > sequences.c1Sequence.length then
-    sequences.c1Sequence.pos = 1
-  end
-  engine.hz(sequences.c1Sequence.data[sequences.c1Sequence.pos])
-  engine.hz(sequences.c2Sequence.data[sequences.c1Sequence.pos])
-end
-]]
 
 function seqOneStep()
   sequences.c1Sequence.pos = sequences.c1Sequence.pos + 1
@@ -159,16 +138,18 @@ function key (n,z)
     if z == 1 then
       if startStop == true then
         startStop = false
-        --audioMetro:stop()
         seqOneMetro:stop()
         seqTwoMetro:stop()
-        screen_refresh_metro:stop()
+        circles.c1.stop()
+        circles.c2.stop()
+        --screen_refresh_metro:stop()
       else
         startStop = true
-        --audioMetro:start(60/bbppmm)
         seqOneMetro:start(60/seqOneBPM)
         seqTwoMetro:start(60/seqTwoBPM)
-        screen_refresh_metro:start(1/framesPerSecond)
+        circles.c1.start()
+        circles.c2.start()
+        --screen_refresh_metro:start(1/framesPerSecond)
       end
     end
   end
@@ -180,25 +161,13 @@ function enc(n,d)
       -- sequence 1 selected
       seqOneBPM = util.clamp(seqOneBPM + d, 1, 250)
       circles.c1.updateBPM(seqOneBPM)
-      seqOneMetro:stop()
-      seqOneMetro:start(60/seqOneBPM)
+      seqOneMetro.time = (60/seqOneBPM)
     elseif selectedSequence >= 21 and selectedSequence <= 30 then
       -- sequence 2 selected
       seqTwoBPM = util.clamp(seqTwoBPM + d, 1, 250)
       circles.c2.updateBPM(seqTwoBPM)
-      seqTwoMetro:stop()
-      seqTwoMetro:start(60/seqTwoBPM)
+      seqTwoMetro.time = (60/seqTwoBPM)
     end
-
-    --bbppmm = util.clamp(bbppmm + d, 1, 250)
-    --circles.c1.updateBPM(bbppmm)
-    --circles.c2.updateBPM(bbppmm)
-    --beatsPerSecond = bbppmm/60
-
-	  --audioMetro:stop()
-    --audioMetro:start(60/bbppmm)
-    screen_refresh_metro:stop()
-    screen_refresh_metro:start(1/framesPerSecond)
 
   elseif n == 2 then
     if d == -1 then
@@ -240,19 +209,19 @@ function redraw()
   screen.level(1)
 
   if selectedSequence >= 1 and selectedSequence <= 10 then
-    drawSeqIcon(10, 54, "true")
+    drawSeqIcon(14, 54, "true")
     drawDot(circles.c1.location()[1], circles.c1.location()[2]+28, "false")
     drawDot(circles.c2.location()[1], circles.c2.location()[2]+28, "false")
   elseif selectedSequence >= 11 and selectedSequence <= 20 then
-    drawSeqIcon(10, 54, "false")
-    drawDot(circles.c1.location()[1], circles.c1.location()[2]+28, "true")
-    drawDot(circles.c2.location()[1], circles.c2.location()[2]+28, "false")
+    drawSeqIcon(14, 54, "false")
+    drawDot(circles.c1.location()[1], 32, "true")
+    drawDot(circles.c2.location()[1], 32, "false")
   elseif selectedSequence >= 21 and selectedSequence <= 30 then
-    drawSeqIcon(10, 54, "false")
-    drawDot(circles.c1.location()[1], circles.c1.location()[2]+28, "false")
-    drawDot(circles.c2.location()[1], circles.c2.location()[2]+28, "true")
+    drawSeqIcon(14, 54, "false")
+    drawDot(circles.c1.location()[1], 32, "false")
+    drawDot(circles.c2.location()[1], 32, "true")
   elseif selectedSequence >= 31 and selectedSequence <= 40 then
-    drawSeqIcon(10, 54, "false")
+    drawSeqIcon(14, 54, "false")
     drawDot(circles.c1.location()[1], circles.c1.location()[2]+28, "false")
     drawDot(circles.c2.location()[1], circles.c2.location()[2]+28, "false")
     -- go to fourth menu item
@@ -267,15 +236,15 @@ end
 function drawSeqIcon(x, y, state)
   if state == "true" then
     screen.level(6)
-    screen.rect(x, y+1, 10, 1)
+    screen.rect(x, y+1, 6, 1)
     screen.fill()
-    screen.rect(x, y+3, 10, 1)
+    screen.rect(x, y+3, 6, 1)
     screen.fill()
   else
     screen.level(1)
-    screen.rect(x, y+1, 10, 1)
+    screen.rect(x, y+1, 6, 1)
     screen.fill()
-    screen.rect(x, y+3, 10, 1)
+    screen.rect(x, y+3, 6, 1)
     screen.fill()
   end
 end
@@ -293,17 +262,24 @@ function drawDot(x, y, state)
 end
 
 -- function to create a new random sequence, called when button three is pushed
-function randomSequence()
-  if selectedSequence >= 11 and selectedSequence <= 20 then
+function randomSequence(type)
+  if type == "all" then
     for i=1,sequences.c1Sequence.length do
       sequences.c1Sequence.data[i] = (math.random(32, 512))
-    end
-    circles.c1.updateNotes(sequences.c1Sequence.data)
-  elseif selectedSequence >= 21 and selectedSequence <= 30 then
-    for i=1,sequences.c1Sequence.length do
       sequences.c2Sequence.data[i] = (math.random(5, 128))
     end
-    circles.c2.updateNotes(sequences.c2Sequence.data)
+  else
+    if selectedSequence >= 11 and selectedSequence <= 20 then
+      for i=1,sequences.c1Sequence.length do
+        sequences.c1Sequence.data[i] = (math.random(32, 512))
+      end
+      circles.c1.updateNotes(sequences.c1Sequence.data)
+    elseif selectedSequence >= 21 and selectedSequence <= 30 then
+      for i=1,sequences.c1Sequence.length do
+        sequences.c2Sequence.data[i] = (math.random(5, 128))
+      end
+      circles.c2.updateNotes(sequences.c2Sequence.data)
+    end
   end
   redraw()
 end

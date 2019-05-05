@@ -17,12 +17,27 @@ function Orbital_Circle.new(x, y, diameter, number_of_notes, beats_per_minute, f
 	orbitalCircle.sequenceData = sequence_data
 	orbitalCircle.type = type
 
+	orbitalCircle.redrawMetro = metro.init()
+	orbitalCircle.redrawMetro.event = function()
+		orbitalCircle.tick()
+	end
+
+	orbitalCircle.redrawMetro:start(1/15)
+
 	function orbitalCircle.updateNotes(sq)
 		orbitalCircle.sequenceData = sq
 	end
 
 	function orbitalCircle.updateBPM(bpm)
 		orbitalCircle.beatsPerSecond = (bpm / 60)
+	end
+
+	function orbitalCircle.stop()
+		orbitalCircle.redrawMetro:stop()
+	end
+
+	function orbitalCircle.start()
+		orbitalCircle.redrawMetro:start(1/15)
 	end
 
 	function orbitalCircle.tick()
