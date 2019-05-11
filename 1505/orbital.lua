@@ -29,7 +29,6 @@
   - add ability to change sequence lengths - UI done
   - add ability to manually edit sequences - UI done
   - get loading and saving of sequence data into an external data file
-  - add an external params file for setting frequency ranges etc
 
   only then will orbital be considered release 1
 
@@ -76,8 +75,8 @@ function init()
   seqTwoBPM = 120
   bbppmm = 120
 
-  circles.c1 = orbitalCircle.new(50, 32, 16, 16, 120, 15, sequences.c1Sequence.data, "treb")
-  circles.c2 = orbitalCircle.new(105, 32, 16, 16, 120, 15, sequences.c2Sequence.data, "bass")
+  circles.c1 = orbitalCircle.new(45, 32, 16, 16, 120, 15, sequences.c1Sequence.data, "treb")
+  circles.c2 = orbitalCircle.new(100, 32, 16, 16, 120, 15, sequences.c2Sequence.data, "bass")
 
   -- fill the sequences with a new random set
   randomSequence("all")
@@ -161,35 +160,43 @@ function enc(n,d)
       seqTwoBPM = util.clamp(seqTwoBPM + d, 1, 250)
       circles.c2.updateBPM(seqTwoBPM)
       seqTwoMetro.time = (60/seqTwoBPM)
+    elseif selectedSequence >= 6 and selectedSequence <= 10 then
+      -- we are now editing the first sequence
+      -- encoder 3 will select note
+    elseif selectedSequence >= 16 and selectedSequence <= 20 then
+      -- we are now editing the second sequence
+      -- encoder 3 will select note
     end
 
   elseif n == 2 then
-    if d == -1 then
-      if selectedSequence >= 1 and selectedSequence <= 5 then
-        if math.min(table.unpack(sequences.c1Sequence.data)) > 32 then
-          for i, v in ipairs(sequences.c1Sequence.data) do
-            sequences.c1Sequence.data[i] = v - 10
-          end
-        end
-      elseif selectedSequence >= 11 and selectedSequence <= 15 then
-        if math.min(table.unpack(sequences.c2Sequence.data)) > 2 then
-          for i, v in ipairs(sequences.c2Sequence.data) do
-            sequences.c2Sequence.data[i] = v - 2
-          end
-        end
-      end
-    elseif d == 1 then
-      if selectedSequence >= 1 and selectedSequence <= 5 then
+    if selectedSequence >= 1 and selectedSequence <= 5 then
+      if math.min(table.unpack(sequences.c1Sequence.data)) >= 32 and math.max(table.unpack(sequences.c1Sequence.data)) <= 512 then
         for i, v in ipairs(sequences.c1Sequence.data) do
-          sequences.c1Sequence.data[i] = v + 10
-        end
-      elseif selectedSequence >= 11 and selectedSequence <= 15 then
-        for i, v in ipairs(sequences.c2Sequence.data) do
-          sequences.c2Sequence.data[i] = v + 2
+          sequences.c1Sequence.data[i] = util.clamp(v + (10*d), 32, 512)
         end
       end
+    elseif selectedSequence >= 11 and selectedSequence <= 15 then
+      if math.min(table.unpack(sequences.c2Sequence.data)) >= 5 and math.max(table.unpack(sequences.c2Sequence.data)) <= 128 then
+        for i, v in ipairs(sequences.c2Sequence.data) do
+          sequences.c2Sequence.data[i] = util.clamp(v + (2*d), 5, 128)
+        end
+      end
+    elseif selectedSequence >= 6 and selectedSequence <= 10 then
+      -- we are now editing the first sequences length
+      sequences.c1Sequence.length = util.clamp(sequences.c1Sequence.length + d, 4, 64)
+      if sequences.c1Sequence.length >= 4 and sequences.c1Sequence.length <= 64 then
+        table.insert(sequences.c1Sequence.data, 1)
+      end
+      print ("c1 length is: "..sequences.c1Sequence.length)
+    elseif selectedSequence >= 16 and selectedSequence <= 20 then
+      -- we are now editing the second sequences length
+      sequences.c2Sequence.length = util.clamp(sequences.c2Sequence.length + d, 4, 64)
+      if sequences.c2Sequence.length >= 4 and sequences.c2Sequence.length <= 64 then
+        table.insert(sequences.c2Sequence.data, 1)
+      end
+      print ("c2 length is: "..sequences.c2Sequence.length)
     end
-  else  -- must be encoder 1
+  elseif n == 1 then  -- must be encoder 1
     selectedSequence = util.clamp(selectedSequence + d, 1, 20)
   end
 end
@@ -203,11 +210,11 @@ function redraw()
   screen.level(1)
 
   -- draw the menu parts
-  screen.circle(8, 4, 1)
+  screen.circle(8, 7, 1)
   screen.fill()
-  screen.circle(6, 32, 1)
+  screen.circle(6, 40, 1)
   screen.fill()
-  screen.circle(10, 32, 1)
+  screen.circle(10, 40, 1)
   screen.fill()
 
   --[[
@@ -219,28 +226,28 @@ function redraw()
 
   if selectedSequence >= 1 and selectedSequence <= 5 then
     --drawSeqIcon(5, 5, "true")
-    drawDot(8, 12, "true")
-    drawSequence(4, 17, "false")
-    drawDot(8, 40, "false")
-    drawSequence(4, 45, "false")
+    drawDot(8, 15, "true")
+    drawSequence(4, 21, "false")
+    drawDot(8, 48, "false")
+    drawSequence(4, 54, "false")
   elseif selectedSequence >= 6 and selectedSequence <= 10 then
     --drawSeqIcon(5, 5, "false")
-    drawDot(8, 12, "false")
-    drawSequence(4, 17, "true")
-    drawDot(8, 40, "false")
-    drawSequence(4, 45, "false")
+    drawDot(8, 15, "false")
+    drawSequence(4, 21, "true")
+    drawDot(8, 48, "false")
+    drawSequence(4, 54, "false")
   elseif selectedSequence >= 11 and selectedSequence <= 15 then
     --drawSeqIcon(5, 5, "false")
-    drawDot(8, 12, "false")
-    drawSequence(4, 17, "false")
-    drawDot(8, 40, "true")
-    drawSequence(4, 45, "false")
+    drawDot(8, 15, "false")
+    drawSequence(4, 21, "false")
+    drawDot(8, 48, "true")
+    drawSequence(4, 54, "false")
   elseif selectedSequence >= 16 and selectedSequence <= 20 then
     --drawSeqIcon(5, 5, "false")
-    drawDot(8, 12, "false")
-    drawSequence(4, 17, "false")
-    drawDot(8, 40, "false")
-    drawSequence(4, 45, "true")
+    drawDot(8, 15, "false")
+    drawSequence(4, 21, "false")
+    drawDot(8, 48, "false")
+    drawSequence(4, 54, "true")
     -- go to fourth menu item
   end
 
