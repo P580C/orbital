@@ -57,18 +57,19 @@ function Orbital_Circle.new(x, y, diameter, number_of_notes, beats_per_minute, f
 		screen.level(1)
 		for i=1,orbitalCircle.numberOfNotes do
 			if orbitalCircle.sequenceData[i] > 0 then
+				print("sequence data position 1 is: "..orbitalCircle.sequenceData[1])
 				if type == "treb" then
 					screen.circle(
 						math.cos(math.rad(orbitalCircle.newRotationValue)+(orbitalCircle.spaceBetweenNotes*i))*orbitalCircle.circleDiameter + orbitalCircle.xPos,
 						math.sin(math.rad(orbitalCircle.newRotationValue)+(orbitalCircle.spaceBetweenNotes*i))*orbitalCircle.circleDiameter + orbitalCircle.yPos,
-						map(orbitalCircle.sequenceData[i])
+						map(orbitalCircle.sequenceData[i], 32, 1024, 1, 12)
 					)
 					screen.fill()
 				else
 					screen.circle(
 						math.cos(math.rad(orbitalCircle.newRotationValue)+(orbitalCircle.spaceBetweenNotes*i))*orbitalCircle.circleDiameter + orbitalCircle.xPos,
 						math.sin(math.rad(orbitalCircle.newRotationValue)+(orbitalCircle.spaceBetweenNotes*i))*orbitalCircle.circleDiameter + orbitalCircle.yPos,
-						map(orbitalCircle.sequenceData[i] * 2)
+						map(orbitalCircle.sequenceData[i], 5, 128, 1, 8)
 					)
 					screen.stroke()
 				end
@@ -77,35 +78,9 @@ function Orbital_Circle.new(x, y, diameter, number_of_notes, beats_per_minute, f
 		end
 	end
 
-	-- utility function to map frequency numbers to relative pixel dimensions (range 32-1024 to range 4-8)
-	function map(n)
-		local returnValue
-		-- draw circles to size based off frequency ranges - can't find a cleaner way to do this
-		if n >= 1 and n <= 50 then
-			returnValue = 0.5
-		elseif n >= 51 and n <= 100 then
-			returnValue = 0.5
-		elseif n >= 101 and n <= 200 then
-			returnValue = 1
-		elseif n >= 201 and n <= 300 then
-			returnValue = 2
-		elseif n >= 301 and n <= 400 then
-			returnValue = 2
-		elseif n >= 401 and n <= 500 then
-			returnValue = 3
-		elseif n >= 501 and n <= 600 then
-			returnValue = 3
-		elseif n >= 601 and n <= 700 then
-			returnValue = 4
-		elseif n >= 701 and n <= 800 then
-			returnValue = 5
-		elseif n >= 801 and n <= 900 then
-			returnValue = 6
-		elseif n >= 901 and n <= 1000 then
-			returnValue = 7
-		else
-			returnValue = 8
-		end
+	-- utility function to map frequency numbers to relative pixel dimensions
+	function map(n, m, mx, rm, rmx)
+		local returnValue = rm + ((rmx - rm) / (mx - m)) * (n - m)
 		return returnValue
 	end
 

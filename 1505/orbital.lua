@@ -25,7 +25,6 @@
   my own engines are being worked on
 
   orbital has a roadmap, the things still to do are...
-
   - add ability to change sequence lengths - UI done
   - add ability to manually edit sequences - UI done
   - get loading and saving of sequence data into an external data file
@@ -42,7 +41,6 @@
 engine.name = "PolyPerc"
 
 -- create required variables
---local freqs = {}
 local startStop = true
 local screen_refresh_metro
 local seqOneMetro
@@ -60,9 +58,8 @@ local sequences = {
 }
 
 local orbitalCircle = include('lib/orbital_circle')
--- orbital_circle requires x, y, diameter, scale_factor, number_of_notes, beats_per_second, frames_per_second, sequence_data, sequence type "treb" or "bass"
-
 local circles = {c1, c2}
+local unpack = unpack or table.unpack
 
 --  get things started
 function init()
@@ -76,7 +73,7 @@ function init()
   bbppmm = 120
 
   circles.c1 = orbitalCircle.new(45, 32, 16, 16, 120, 15, sequences.c1Sequence.data, "treb")
-  circles.c2 = orbitalCircle.new(100, 32, 16, 16, 120, 15, sequences.c2Sequence.data, "bass")
+  circles.c2 = orbitalCircle.new(96, 32, 16, 16, 120, 15, sequences.c2Sequence.data, "bass")
 
   -- fill the sequences with a new random set
   randomSequence("all")
@@ -84,9 +81,6 @@ function init()
   -- we use a metro to trigger n times per second (frameRate)
   screen_refresh_metro = metro.init()
   screen_refresh_metro.event = function()
-    --circles.c1.tick()
-    --circles.c2.tick()
-
     redraw()
   end
 
@@ -149,6 +143,38 @@ function key (n,z)
 end
 
 function enc(n,d)
+  if n == 1 then
+    selectedSequence = util.clamp(selectedSequence + d, 1, 20)
+  end
+
+  if n == 2 then
+    if selectedSequence >= 1 and selectedSequence <= 5 then
+      --[[for i, v in ipairs(sequences.c1Sequence.data) do
+        sequences.c1Sequence.data[i] = v + (10*d) 
+      end]]
+      sequences.c1Sequence.data = adjust(sequences.c1Sequence.data, (10*d), 12, 1024)
+      circles.c1.updateNotes(sequences.c1Sequence.data)
+    end
+
+    --data=adjust(data,-1)
+
+    if selectedSequence >= 11 and selectedSequence <= 15 then
+      --[[for i, v in ipairs(sequences.c2Sequence.data) do
+       sequences.c2Sequence.data[i] = v + (10*d) 
+      end]]
+      sequences.c2Sequence.data = adjust(sequences.c2Sequence.data, (10*d), 2, 256)
+      circles.c2.updateNotes(sequences.c2Sequence.data)
+    end
+
+    if selectedSequence >= 6 and selectedSequence <= 10 then
+      -- we are now editing the first sequence's length
+    end
+
+    if selectedSequence >= 16 and selectedSequence <= 20 then
+      -- we are now editing the second sequence's length
+    end
+  end
+
   if n == 3 then
     if selectedSequence >= 1 and selectedSequence <= 5 then
       -- sequence 1 selected
@@ -167,37 +193,6 @@ function enc(n,d)
       -- we are now editing the second sequence
       -- encoder 3 will select note
     end
-
-  elseif n == 2 then
-    if selectedSequence >= 1 and selectedSequence <= 5 then
-      if math.min(table.unpack(sequences.c1Sequence.data)) >= 32 and math.max(table.unpack(sequences.c1Sequence.data)) <= 512 then
-        for i, v in ipairs(sequences.c1Sequence.data) do
-          sequences.c1Sequence.data[i] = util.clamp(v + (10*d), 32, 512)
-        end
-      end
-    elseif selectedSequence >= 11 and selectedSequence <= 15 then
-      if math.min(table.unpack(sequences.c2Sequence.data)) >= 5 and math.max(table.unpack(sequences.c2Sequence.data)) <= 128 then
-        for i, v in ipairs(sequences.c2Sequence.data) do
-          sequences.c2Sequence.data[i] = util.clamp(v + (2*d), 5, 128)
-        end
-      end
-    elseif selectedSequence >= 6 and selectedSequence <= 10 then
-      -- we are now editing the first sequences length
-      sequences.c1Sequence.length = util.clamp(sequences.c1Sequence.length + d, 4, 64)
-      if sequences.c1Sequence.length >= 4 and sequences.c1Sequence.length <= 64 then
-        table.insert(sequences.c1Sequence.data, 1)
-      end
-      print ("c1 length is: "..sequences.c1Sequence.length)
-    elseif selectedSequence >= 16 and selectedSequence <= 20 then
-      -- we are now editing the second sequences length
-      sequences.c2Sequence.length = util.clamp(sequences.c2Sequence.length + d, 4, 64)
-      if sequences.c2Sequence.length >= 4 and sequences.c2Sequence.length <= 64 then
-        table.insert(sequences.c2Sequence.data, 1)
-      end
-      print ("c2 length is: "..sequences.c2Sequence.length)
-    end
-  elseif n == 1 then  -- must be encoder 1
-    selectedSequence = util.clamp(selectedSequence + d, 1, 20)
   end
 end
 
@@ -216,13 +211,6 @@ function redraw()
   screen.fill()
   screen.circle(10, 40, 1)
   screen.fill()
-
-  --[[
-1-5 = circle 1
-6-10 = sequence 1
-11-15 = circle 2
-16-20 = sequence 2
-]]
 
   if selectedSequence >= 1 and selectedSequence <= 5 then
     --drawSeqIcon(5, 5, "true")
@@ -289,25 +277,70 @@ function drawSequence(x, y, state)
   end
 end
 
--- function to create a new random sequence, called when button three is pushed
-function randomSequence(type)
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+
+function randomSequence(type)             --create a random sequence
   if type == "all" then
     for i=1,sequences.c1Sequence.length do
-      sequences.c1Sequence.data[i] = (math.random(32, 512))
-      sequences.c2Sequence.data[i] = (math.random(5, 128))
+      sequences.c1Sequence.data[i] = (math.random(128, 512))
+      sequences.c2Sequence.data[i] = (math.random(64, 128))
     end
   else
     if selectedSequence >= 1 and selectedSequence <= 5 then
       for i=1,sequences.c1Sequence.length do
-        sequences.c1Sequence.data[i] = (math.random(32, 512))
+        sequences.c1Sequence.data[i] = (math.random(128, 512))
       end
       circles.c1.updateNotes(sequences.c1Sequence.data)
     elseif selectedSequence >= 11 and selectedSequence <= 15 then
       for i=1,sequences.c1Sequence.length do
-        sequences.c2Sequence.data[i] = (math.random(5, 128))
+        sequences.c2Sequence.data[i] = (math.random(64, 128))
       end
       circles.c2.updateNotes(sequences.c2Sequence.data)
     end
   end
   redraw()
 end
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+
+function min(...)                       --return minimum of all elements
+  local ans = select(1,...)
+  if type(ans) == 'table' then ans = min(unpack(ans)) end
+  for _,n in ipairs { select(2,...) } do
+    if type(n) == 'table' then n = min(unpack(n)) end
+    if n < ans then ans = n end
+  end
+  return ans
+end
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+
+function max(...)                       --return maximum of all elements
+  local ans = select(1,...)
+  if type(ans) == 'table' then ans = max(unpack(ans)) end
+  for _,n in ipairs { select(2,...) } do
+    if type(n) == 'table' then n = max(unpack(n)) end
+    if n > ans then ans = n end
+  end
+  return ans
+end
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+
+function adjust(t,val,m,mx)             --adjust table value up and down within given limits
+  if min(t)+val < m or max(t)+val > mx then return t end
+  ans = {}
+  for _,x in ipairs(t) do
+    ans[#ans+1] = x+val
+  end
+  return ans
+end
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+
+function pt(t)                          --unpack and print a table
+  unpacked  = table.unpack(t)
+  return unpacked
+end
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
