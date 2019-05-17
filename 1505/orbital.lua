@@ -2,10 +2,10 @@
 -- alpha version 1.1
 -- p1505
 --
--- enc 1 chooses sequence
+-- enc 1 accesses menu
 --
 -- btn 2 randomises sequence
--- enc 2 changes pitch
+-- enc 2 changes pitch and sequence length
 --
 -- btn 3 starts/stops sequence
 -- enc 3 changes BPM
@@ -25,9 +25,16 @@
   my own engines are being worked on
 
   orbital has a roadmap, the things still to do are...
-  - add ability to change sequence lengths - UI done
-  - add ability to manually edit sequences - UI done
+  - add ability to change sequence lengths - done
+  - add ability to manually edit sequences - current
+  - add ability to stop circles independantly
   - get loading and saving of sequence data into an external data file
+  
+  and bugs to fix...
+   - allow user to drop frequency as far as they want, but dont allow negative values - done
+   - same with upper values - done
+   - add variety to circle sizes
+   - ensure ui and audio in sync - current
 
   only then will orbital be considered release 1
 
@@ -36,55 +43,66 @@
   enjoy
 ]]--
 
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--sound engine
 
---  load the sound engine
 engine.name = "PolyPerc"
 
--- create required variables
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--variables
+
 local startStop = true
 local screen_refresh_metro
 local seqOneMetro
 local seqTwoMetro
 local seqOneBPM
 local seqTwoBPM
-local bbppmm  -- the beats per minute of the track
+local bbppmm
 local framesPerSecond = 15
 local selectedSequence = 1
-
--- default sequences
+local orbitalCircle = include('lib/orbital_circle')
+local circles = {c1, c2}
+local unpack = unpack or table.unpack
+local seqOneCounter = 0
+local seqTwoCounter = 0
 local sequences = {
   c1Sequence = {pos = 0, length = 16, data = {1, 2, 1, 3, 2, 4, 1, 2, 1, 4, 1, 6, 3, 2, 1, 1}},
   c2Sequence = {pos = 0, length = 16, data = {1, 2, 1, 3, 2, 4, 1, 2, 1, 4, 1, 6, 3, 2, 1, 1}}
 }
 
-local orbitalCircle = include('lib/orbital_circle')
-local circles = {c1, c2}
-local unpack = unpack or table.unpack
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--basic setup
 
---  get things started
 function init()
-  -- set screen antialiasing level
   screen.aa(1)
   screen.line_width(1)
 
-  -- set the bpm to a default value
   seqOneBPM = 120
   seqTwoBPM = 120
   bbppmm = 120
 
-  circles.c1 = orbitalCircle.new(45, 32, 16, 16, 120, 15, sequences.c1Sequence.data, "treb")
-  circles.c2 = orbitalCircle.new(96, 32, 16, 16, 120, 15, sequences.c2Sequence.data, "bass")
+  circles.c1 = orbitalCircle.new(45, 32, 16, 16, 120, sequences.c1Sequence.data, "treb")
+  circles.c2 = orbitalCircle.new(96, 32, 16, 16, 120, sequences.c2Sequence.data, "bass")
 
-  -- fill the sequences with a new random set
   randomSequence("all")
 
-  -- we use a metro to trigger n times per second (frameRate)
+  --------------------------------------------------------------------------------------------------------------------------------------------------------
+  --create metros
+  
   screen_refresh_metro = metro.init()
   screen_refresh_metro.event = function()
     redraw()
   end
 
   screen_refresh_metro:start(1/framesPerSecond)
+
+  ui_refresh_metro = metro.init()
+  ui_refresh_metro.event = function()
+    circles.c1.tick()
+    circles.c2.tick()
+  end
+
+  ui_refresh_metro:start(1/framesPerSecond)
 
   -- set up the metros for audio sequences
   seqOneMetro = metro.init()
@@ -101,12 +119,18 @@ function init()
   seqTwoMetro:start(60/bbppmm)
 end
 
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--sequence position tracking
+
 function seqOneStep()
   sequences.c1Sequence.pos = sequences.c1Sequence.pos + 1
   if sequences.c1Sequence.pos > sequences.c1Sequence.length then
     sequences.c1Sequence.pos = 1
   end
-  engine.hz(sequences.c1Sequence.data[sequences.c1Sequence.pos])
+  
+  if sequences.c1Sequence.data[sequences.c1Sequence.pos] ~= nill then
+    engine.hz(sequences.c1Sequence.data[sequences.c1Sequence.pos])
+  end
 end
 
 function seqTwoStep()
@@ -114,10 +138,15 @@ function seqTwoStep()
   if sequences.c2Sequence.pos > sequences.c2Sequence.length then
     sequences.c2Sequence.pos = 1
   end
-  engine.hz(sequences.c2Sequence.data[sequences.c2Sequence.pos])
+  
+  if sequences.c2Sequence.data[sequences.c2Sequence.pos] ~= nill then
+    engine.hz(sequences.c2Sequence.data[sequences.c2Sequence.pos])
+  end
 end
 
--- input handling
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--button input
+
 function key (n,z)
   if n == 2 then
     if z == 1 then
@@ -129,18 +158,19 @@ function key (n,z)
         startStop = false
         seqOneMetro:stop()
         seqTwoMetro:stop()
-        circles.c1.stop()
-        circles.c2.stop()
+        ui_refresh_metro:stop()
       else
         startStop = true
         seqOneMetro:start(60/seqOneBPM)
         seqTwoMetro:start(60/seqTwoBPM)
-        circles.c1.start()
-        circles.c2.start()
+        ui_refresh_metro:start(1/framesPerSecond)
       end
     end
   end
 end
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--encoder input
 
 function enc(n,d)
   if n == 1 then
@@ -149,40 +179,63 @@ function enc(n,d)
 
   if n == 2 then
     if selectedSequence >= 1 and selectedSequence <= 5 then
-      --[[for i, v in ipairs(sequences.c1Sequence.data) do
-        sequences.c1Sequence.data[i] = v + (10*d) 
-      end]]
-      sequences.c1Sequence.data = adjust(sequences.c1Sequence.data, (10*d), 12, 1024)
+      sequences.c1Sequence.data = adjust(sequences.c1Sequence.data, (10*d), 1, 4096)
       circles.c1.updateNotes(sequences.c1Sequence.data)
     end
 
-    --data=adjust(data,-1)
-
     if selectedSequence >= 11 and selectedSequence <= 15 then
-      --[[for i, v in ipairs(sequences.c2Sequence.data) do
-       sequences.c2Sequence.data[i] = v + (10*d) 
-      end]]
-      sequences.c2Sequence.data = adjust(sequences.c2Sequence.data, (10*d), 2, 256)
+      sequences.c2Sequence.data = adjust(sequences.c2Sequence.data, (10*d), 1, 4096)
       circles.c2.updateNotes(sequences.c2Sequence.data)
     end
 
     if selectedSequence >= 6 and selectedSequence <= 10 then
-      -- we are now editing the first sequence's length
+      if d == 1 then
+        seqOneCounter = seqOneCounter + 1
+        if (seqOneCounter % 5 == 0) then
+          if (#sequences.c1Sequence.data) < 32 then
+            sequences.c1Sequence.data[(#sequences.c1Sequence.data + 1)] = math.random(128, 768)
+            circles.c1.updateNotes(sequences.c1Sequence.data)
+          end
+        end
+      elseif d == -1 then
+        seqOneCounter = seqOneCounter - 1
+        if (seqOneCounter % 5 == 0) then
+          if (#sequences.c1Sequence.data) > 2 then
+            sequences.c1Sequence.data[(#sequences.c1Sequence.data)] = nil
+            circles.c1.updateNotes(sequences.c1Sequence.data)
+          end
+        end
+      end
     end
 
     if selectedSequence >= 16 and selectedSequence <= 20 then
-      -- we are now editing the second sequence's length
+      if d == 1 then
+        seqTwoCounter = seqTwoCounter + 1
+        if (seqTwoCounter % 5 == 0) then
+          if (#sequences.c2Sequence.data) < 32 then
+            sequences.c2Sequence.data[(#sequences.c2Sequence.data + 1)] = math.random(32, 128)
+            circles.c2.updateNotes(sequences.c2Sequence.data)
+          end
+        end
+      elseif d == -1 then
+        seqTwoCounter = seqTwoCounter - 1
+        if (seqTwoCounter % 5 == 0) then
+          if (#sequences.c2Sequence.data) > 2 then
+            sequences.c2Sequence.data[(#sequences.c2Sequence.data)] = nil
+            circles.c2.updateNotes(sequences.c2Sequence.data)
+          end
+        end
+      end
     end
   end
 
   if n == 3 then
     if selectedSequence >= 1 and selectedSequence <= 5 then
-      -- sequence 1 selected
       seqOneBPM = util.clamp(seqOneBPM + d, 1, 250)
+      print("seqOneBPM is: "..seqOneBPM)
       circles.c1.updateBPM(seqOneBPM)
       seqOneMetro.time = (60/seqOneBPM)
     elseif selectedSequence >= 11 and selectedSequence <= 15 then
-      -- sequence 2 selected
       seqTwoBPM = util.clamp(seqTwoBPM + d, 1, 250)
       circles.c2.updateBPM(seqTwoBPM)
       seqTwoMetro.time = (60/seqTwoBPM)
@@ -196,13 +249,19 @@ function enc(n,d)
   end
 end
 
--- drawing the graphical interface
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--draw the graphical interface
+
 function redraw()
   screen.clear()
   screen.level(4)
 	screen.rect(0,0,128,64)
 	screen.fill()
   screen.level(1)
+
+  -- draw the middle mark
+  screen.circle(71,32,2)
+  screen.fill()
 
   -- draw the menu parts
   screen.circle(8, 7, 1)
@@ -213,37 +272,35 @@ function redraw()
   screen.fill()
 
   if selectedSequence >= 1 and selectedSequence <= 5 then
-    --drawSeqIcon(5, 5, "true")
     drawDot(8, 15, "true")
     drawSequence(4, 21, "false")
     drawDot(8, 48, "false")
     drawSequence(4, 54, "false")
   elseif selectedSequence >= 6 and selectedSequence <= 10 then
-    --drawSeqIcon(5, 5, "false")
     drawDot(8, 15, "false")
     drawSequence(4, 21, "true")
     drawDot(8, 48, "false")
     drawSequence(4, 54, "false")
   elseif selectedSequence >= 11 and selectedSequence <= 15 then
-    --drawSeqIcon(5, 5, "false")
     drawDot(8, 15, "false")
     drawSequence(4, 21, "false")
     drawDot(8, 48, "true")
     drawSequence(4, 54, "false")
   elseif selectedSequence >= 16 and selectedSequence <= 20 then
-    --drawSeqIcon(5, 5, "false")
     drawDot(8, 15, "false")
     drawSequence(4, 21, "false")
     drawDot(8, 48, "false")
     drawSequence(4, 54, "true")
-    -- go to fourth menu item
   end
 
-  --screen.level(1)
   circles.c1.redraw()
   circles.c2.redraw()
   screen.update()
 end
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--functions to create different UI elements
+--will be migrated to UI librarty in time
 
 function drawDot(x, y, state)
   if state == "true" then
@@ -277,23 +334,52 @@ function drawSequence(x, y, state)
   end
 end
 
---------------------------------------------------------------------------------------------------------------------------------------------------------
+function drawLinkIcon(x, y, state)
+  if state == "unlinkedtrue" then
+    screen.level(6)
+    screen.circle(x-2, y, 5)
+    screen.circle(x+2, y, 5)
+    screen.stroke()
+  elseif state == "unlinkedfalse" then
+    screen.level(6)
+    screen.circle(x-4, y, 5)
+    screen.circle(x+4, y, 5)
+    screen.stroke()
+  elseif state == "linkedtrue" then
+    screen.level(6)
+    screen.circle(x-2, y, 5)
+    screen.circle(x+2, y, 5)
+    screen.stroke()
+  elseif state == "linkedfalse" then
+    screen.level(1)
+    screen.circle(x-2, y, 5)
+    screen.circle(x+2, y, 5)
+    screen.stroke()
+  end
+end
 
-function randomSequence(type)             --create a random sequence
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--create a random sequence
+
+function randomSequence(type)
   if type == "all" then
-    for i=1,sequences.c1Sequence.length do
+    for i=1,(#sequences.c1Sequence.data) do
       sequences.c1Sequence.data[i] = (math.random(128, 512))
-      sequences.c2Sequence.data[i] = (math.random(64, 128))
     end
+    for i=1,(#sequences.c2Sequence.data) do
+      sequences.c2Sequence.data[i] = (math.random(32, 128))
+    end
+    circles.c1.updateNotes(sequences.c1Sequence.data)
+    circles.c2.updateNotes(sequences.c2Sequence.data)
   else
     if selectedSequence >= 1 and selectedSequence <= 5 then
-      for i=1,sequences.c1Sequence.length do
+      for i=1,(#sequences.c1Sequence.data) do
         sequences.c1Sequence.data[i] = (math.random(128, 512))
       end
       circles.c1.updateNotes(sequences.c1Sequence.data)
     elseif selectedSequence >= 11 and selectedSequence <= 15 then
-      for i=1,sequences.c1Sequence.length do
-        sequences.c2Sequence.data[i] = (math.random(64, 128))
+      for i=1,(#sequences.c2Sequence.data) do
+        sequences.c2Sequence.data[i] = (math.random(32, 128))
       end
       circles.c2.updateNotes(sequences.c2Sequence.data)
     end
@@ -302,8 +388,9 @@ function randomSequence(type)             --create a random sequence
 end
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------
+--return minimum of all elements
 
-function min(...)                       --return minimum of all elements
+function min(...)
   local ans = select(1,...)
   if type(ans) == 'table' then ans = min(unpack(ans)) end
   for _,n in ipairs { select(2,...) } do
@@ -314,8 +401,9 @@ function min(...)                       --return minimum of all elements
 end
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------
+--return maximum of all elements
 
-function max(...)                       --return maximum of all elements
+function max(...)
   local ans = select(1,...)
   if type(ans) == 'table' then ans = max(unpack(ans)) end
   for _,n in ipairs { select(2,...) } do
@@ -326,8 +414,9 @@ function max(...)                       --return maximum of all elements
 end
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------
+--adjust table value up and down within given limits
 
-function adjust(t,val,m,mx)             --adjust table value up and down within given limits
+function adjust(t,val,m,mx)
   if min(t)+val < m or max(t)+val > mx then return t end
   ans = {}
   for _,x in ipairs(t) do
@@ -337,8 +426,9 @@ function adjust(t,val,m,mx)             --adjust table value up and down within 
 end
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------
+--unpack and print a table
 
-function pt(t)                          --unpack and print a table
+function pt(t)
   unpacked  = table.unpack(t)
   return unpacked
 end
