@@ -57,12 +57,14 @@ local seqOneMetro
 local seqTwoMetro
 local seqOneBPM
 local seqTwoBPM
-local bbppmm
 local framesPerSecond = 15
 local selectedSequence = 1
 local orbitalCircle = include('lib/orbital_circle')
 local circles = {c1, c2}
 local unpack = unpack or table.unpack
+local btnTwoHeld = false
+local seqOneSelected = 1
+local seqTwoSelected = 1
 local seqOneCounter = 0
 local seqTwoCounter = 0
 local sequences = {
@@ -77,12 +79,11 @@ function init()
   screen.aa(1)
   screen.line_width(1)
 
-  seqOneBPM = 120
-  seqTwoBPM = 120
-  bbppmm = 120
+  seqOneBPM = 82
+  seqTwoBPM = 21
 
-  circles.c1 = orbitalCircle.new(45, 32, 16, 16, 120, sequences.c1Sequence.data, "treb")
-  circles.c2 = orbitalCircle.new(96, 32, 16, 16, 120, sequences.c2Sequence.data, "bass")
+  circles.c1 = orbitalCircle.new(45, 32, 16, 16, seqOneBPM, sequences.c1Sequence.data, "treb")
+  circles.c2 = orbitalCircle.new(96, 32, 16, 16, seqTwoBPM, sequences.c2Sequence.data, "bass")
 
   randomSequence("all")
 
@@ -115,9 +116,15 @@ function init()
     seqTwoStep()
   end
 
-  seqOneMetro:start(60/bbppmm)
-  seqTwoMetro:start(60/bbppmm)
+  seqOneMetro:start(60/seqOneBPM)
+  seqTwoMetro:start(60/seqTwoBPM)
 end
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------
 --sequence position tracking
@@ -145,70 +152,145 @@ function seqTwoStep()
 end
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
 --button input
 
 function key (n,z)
-  if n == 2 then
-    if z == 1 then
-      randomSequence()
+  if selectedSequence >= 1 and selectedSequence <= 5 then
+    if n == 2 then
+      if z == 1 then
+        randomSequence()
+      end
     end
-  elseif n == 3 then
-    if z == 1 then
-      if startStop == true then
-        startStop = false
-        seqOneMetro:stop()
-        seqTwoMetro:stop()
-        ui_refresh_metro:stop()
+
+    if n == 3 then
+      if z == 1 then
+        if startStop == true then
+          startStop = false
+          seqOneMetro:stop()
+          seqTwoMetro:stop()
+          ui_refresh_metro:stop()
+        else
+          startStop = true
+          seqOneMetro:start(60/seqOneBPM)
+          seqTwoMetro:start(60/seqTwoBPM)
+          ui_refresh_metro:start(1/framesPerSecond)
+        end
+      end
+    end
+  end
+
+  if selectedSequence >= 6 and selectedSequence <= 10 then
+    if n == 2 then
+      if z == 1 then
+        btnTwoHeld = true
       else
-        startStop = true
-        seqOneMetro:start(60/seqOneBPM)
-        seqTwoMetro:start(60/seqTwoBPM)
-        ui_refresh_metro:start(1/framesPerSecond)
+        btnTwoHeld = false
+      end
+    end
+  end
+
+  if selectedSequence >= 11 and selectedSequence <= 15 then
+    if n == 2 then
+      if z == 1 then
+        randomSequence()
+      end
+    end
+
+    if n == 3 then
+      if z == 1 then
+        if startStop == true then
+          startStop = false
+          seqOneMetro:stop()
+          seqTwoMetro:stop()
+          ui_refresh_metro:stop()
+        else
+          startStop = true
+          seqOneMetro:start(60/seqOneBPM)
+          seqTwoMetro:start(60/seqTwoBPM)
+          ui_refresh_metro:start(1/framesPerSecond)
+        end
+      end
+    end
+  end
+
+  if selectedSequence >= 16 and selectedSequence <= 20 then
+    if n == 2 then
+      if z == 1 then
+        btnTwoHeld = true
+      else
+        btnTwoHeld = false
       end
     end
   end
 end
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
 --encoder input
 
 function enc(n,d)
-  if n == 1 then
-    selectedSequence = util.clamp(selectedSequence + d, 1, 20)
+  if n == 1 then --if encorder 1
+    selectedSequence = util.clamp(selectedSequence + d, 1, 20)  --stops the user from being able to scroll off the ui. ranges are used to make the ui less skittish
   end
 
-  if n == 2 then
-    if selectedSequence >= 1 and selectedSequence <= 5 then
-      sequences.c1Sequence.data = adjust(sequences.c1Sequence.data, (10*d), 1, 4096)
-      circles.c1.updateNotes(sequences.c1Sequence.data)
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--update the pitch of notes being played
+
+  if n == 2 then  --if encoder 2
+    if selectedSequence >= 1 and selectedSequence <= 5 then  --if on ui element 1, sequence one basic controls
+      circles.c1.setEditMode(false)
+      circles.c2.setEditMode(false)
+      sequences.c1Sequence.data = adjust(sequences.c1Sequence.data, (10*d), 1, 4096)  --adjust frequency of notes
+      circles.c1.updateNotes(sequences.c1Sequence.data)  --update the circle instance to ensure the ui is in sync
     end
 
-    if selectedSequence >= 11 and selectedSequence <= 15 then
-      sequences.c2Sequence.data = adjust(sequences.c2Sequence.data, (10*d), 1, 4096)
-      circles.c2.updateNotes(sequences.c2Sequence.data)
+    if selectedSequence >= 11 and selectedSequence <= 15 then  --if on ui element 3, sequence two basic controls
+      circles.c1.setEditMode(false)
+      circles.c2.setEditMode(false)
+      sequences.c2Sequence.data = adjust(sequences.c2Sequence.data, (10*d), 1, 4096)  --adjust frequency of notes
+      circles.c2.updateNotes(sequences.c2Sequence.data)  --update the circle instance to ensure the ui is in sync
     end
 
-    if selectedSequence >= 6 and selectedSequence <= 10 then
-      if d == 1 then
-        seqOneCounter = seqOneCounter + 1
-        if (seqOneCounter % 5 == 0) then
-          if (#sequences.c1Sequence.data) < 32 then
-            sequences.c1Sequence.data[(#sequences.c1Sequence.data + 1)] = math.random(128, 768)
-            circles.c1.updateNotes(sequences.c1Sequence.data)
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--edit sequence one length
+
+    if selectedSequence >= 6 and selectedSequence <= 10 then  --if on ui element 2, sequence 1 additional controls
+      circles.c1.setEditMode(true)
+      if d == 1 then  --if encoder two turned clockwise
+        seqOneCounter = seqOneCounter + 1  --increase the length of the sequence counter
+        if (seqOneCounter % 5 == 0) then  --some mod just to make the input less instant
+          if (#sequences.c1Sequence.data) < 32 then  --if the sequence is less than 32, add a note
+            sequences.c1Sequence.data[(#sequences.c1Sequence.data + 1)] = math.random(128, 768)  --the note dded to the sequence
+            circles.c1.updateNotes(sequences.c1Sequence.data)  --update the ui
           end
         end
-      elseif d == -1 then
+      elseif d == -1 then  --or i the encoder was turned anti clockwise
         seqOneCounter = seqOneCounter - 1
         if (seqOneCounter % 5 == 0) then
           if (#sequences.c1Sequence.data) > 2 then
-            sequences.c1Sequence.data[(#sequences.c1Sequence.data)] = nil
-            circles.c1.updateNotes(sequences.c1Sequence.data)
+            sequences.c1Sequence.data[(#sequences.c1Sequence.data)] = nil  --kill the last note in the sequence
+            circles.c1.updateNotes(sequences.c1Sequence.data)  --and update the ui
           end
         end
       end
     end
 
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--edit sequence two length
+
     if selectedSequence >= 16 and selectedSequence <= 20 then
+      circles.c2.setEditMode(true)
       if d == 1 then
         seqTwoCounter = seqTwoCounter + 1
         if (seqTwoCounter % 5 == 0) then
@@ -229,25 +311,93 @@ function enc(n,d)
     end
   end
 
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--edit the bpm of the sequences
+
   if n == 3 then
     if selectedSequence >= 1 and selectedSequence <= 5 then
+      circles.c1.setEditMode(false)
+      circles.c2.setEditMode(false)
       seqOneBPM = util.clamp(seqOneBPM + d, 1, 250)
-      print("seqOneBPM is: "..seqOneBPM)
       circles.c1.updateBPM(seqOneBPM)
       seqOneMetro.time = (60/seqOneBPM)
     elseif selectedSequence >= 11 and selectedSequence <= 15 then
+      circles.c1.setEditMode(false)
+      circles.c2.setEditMode(false)
       seqTwoBPM = util.clamp(seqTwoBPM + d, 1, 250)
       circles.c2.updateBPM(seqTwoBPM)
       seqTwoMetro.time = (60/seqTwoBPM)
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--edit the pitch of the notes of sequence 1
+
     elseif selectedSequence >= 6 and selectedSequence <= 10 then
-      -- we are now editing the first sequence
-      -- encoder 3 will select note
+      circles.c1.setEditMode(true)
+      if d == 1 and btnTwoHeld == false then
+        if seqOneSelected == (#sequences.c1Sequence.data) then
+          seqOneSelected = 0
+        else
+          seqOneSelected = seqOneSelected +1
+          circles.c1.selectNote(seqOneSelected)
+        end
+      end
+
+      if d == 1 and btnTwoHeld == true then
+        sequences.c1Sequence.data[seqOneSelected] = (sequences.c1Sequence.data[seqOneSelected]) + (10)
+      end
+
+      if d == -1 and btnTwoHeld == false then
+        if seqOneSelected == 1 then
+          seqOneSelected = (#sequences.c1Sequence.data)
+        else
+          seqOneSelected = seqOneSelected -1
+          circles.c1.selectNote(seqOneSelected)
+        end
+      end
+
+      if d == -1 and btnTwoHeld == true then
+        sequences.c1Sequence.data[seqOneSelected] = (sequences.c1Sequence.data[seqOneSelected]) - (10)
+      end
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--edit the pitch of the notes of sequence 2
+
     elseif selectedSequence >= 16 and selectedSequence <= 20 then
-      -- we are now editing the second sequence
-      -- encoder 3 will select note
+      circles.c2.setEditMode(true)
+      if d == 1 and btnTwoHeld == false then
+        if seqTwoSelected == (#sequences.c2Sequence.data) then
+          seqTwoSelected = 0
+        else
+          seqTwoSelected = seqTwoSelected +1
+          circles.c2.selectNote(seqTwoSelected)
+        end
+      end
+
+      if d == 1 and btnTwoHeld == true then
+        sequences.c2Sequence.data[seqTwoSelected] = (sequences.c2Sequence.data[seqTwoSelected]) + (10)
+      end
+
+      if d == -1 and btnTwoHeld == false then
+        if seqTwoSelected == 1 then
+          seqTwoSelected = (#sequences.c2Sequence.data)
+        else
+          seqTwoSelected = seqTwoSelected -1
+          circles.c2.selectNote(seqTwoSelected)
+        end
+      end
+
+      if d == -1 and btnTwoHeld == true then
+        sequences.c2Sequence.data[seqTwoSelected] = (sequences.c2Sequence.data[seqTwoSelected]) - (10)
+      end
     end
   end
 end
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------
 --draw the graphical interface
@@ -258,10 +408,6 @@ function redraw()
 	screen.rect(0,0,128,64)
 	screen.fill()
   screen.level(1)
-
-  -- draw the middle mark
-  screen.circle(71,32,2)
-  screen.fill()
 
   -- draw the menu parts
   screen.circle(8, 7, 1)
@@ -297,6 +443,12 @@ function redraw()
   circles.c2.redraw()
   screen.update()
 end
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------
 --functions to create different UI elements
@@ -426,7 +578,7 @@ function adjust(t,val,m,mx)
 end
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------
---unpack and print a table
+--unpack a table
 
 function pt(t)
   unpacked  = table.unpack(t)

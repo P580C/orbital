@@ -17,14 +17,26 @@ function Orbital_Circle.new(x, y, diameter, number_of_notes, beats_per_minute, s
 	orbitalCircle.newRotationValue = orbitalCircle.currentRotation + orbitalCircle.degreesPerFrame
 	orbitalCircle.sequenceData = sequence_data
 	orbitalCircle.type = type
-	--orbitalCircle.degreesPerSecond = (((orbitalCircle.beatsPerMinute / orbitalCircle.numberOfNotes) * 360) / 60)
-	--orbitalCircle.framesPerFullRotation = (360/orbitalCircle.degreesPerSecond)*15
+	orbitalCircle.selectedNote = 0
+	orbitalCircle.buttonTwoHeld = false
+	orbitalCircle.editMode = false
 	
 	function orbitalCircle.updateNotes(sq)
 		orbitalCircle.sequenceData = sq
 		orbitalCircle.numberOfNotes = (#sq)
 		orbitalCircle.spaceBetweenNotes = (360 / orbitalCircle.numberOfNotes)
-		print("SBN: "..orbitalCircle.spaceBetweenNotes)
+	end
+
+	function orbitalCircle.setEditMode(m)
+		orbitalCircle.editMode = m
+	end
+
+	function orbitalCircle.selectNote(n)
+		orbitalCircle.selectedNote = n
+	end
+
+	function orbitalCircle.buttonTwoHeld(b)
+		orbitalCircle.buttonTwoHeld = b
 	end
 
 	function orbitalCircle.updateBPM(bpm)
@@ -56,9 +68,15 @@ function Orbital_Circle.new(x, y, diameter, number_of_notes, beats_per_minute, s
 		screen.level(3)
 		screen.circle(orbitalCircle.xPos, orbitalCircle.yPos, orbitalCircle.circleDiameter)
 		screen.stroke()
-		screen.level(1)
 		for i=1, (#orbitalCircle.sequenceData) do
 			if orbitalCircle.sequenceData[i] > 0 then
+
+				if i == orbitalCircle.selectedNote and orbitalCircle.editMode == true then
+					screen.level(6)
+				else
+					screen.level(1)
+				end
+
 				if type == "treb" then
 					screen.circle(
 						math.cos(math.rad(orbitalCircle.newRotationValue)+(orbitalCircle.spaceBetweenNotes*i))*orbitalCircle.circleDiameter + orbitalCircle.xPos,
