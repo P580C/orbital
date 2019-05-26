@@ -2,22 +2,20 @@
 
 hello
   
-welcome to orbital, version 1.1 (alpha) by 1505 
+welcome to orbital, version 1.1 by 1505 
 
 orbital is an experiment in simple sequences and interface design
 it was created to learn lua scripting for norns
 it is very much a work in progress
 
 the code is messy, the capability small
+
 orbital has a roadmap, the things still to do are...
-
-- move trig calculations into external class - done.
-- add ability to change sequence length - do to.
-- add up to 4 sequences - this was canned due to UI limitations, it will come in a future script. For now you can have two sequences and have control over the frequencies of each. For now the left is treble, the right is bass.
-- get saving and loading of sequence data into an external file - done but I will test heavily before release.
-- set BPM on each sequence indivdually - done.
-
-only then will orbital be considered release 1
+  - add ability to stop circles independantly
+  - get loading and saving of sequence data into an external data file
+  
+  and bugs to fix...
+   - add variety to note circle sizes - more of a UI improvement than a bug
 
 please comment, suggest, tell me where the code is a mess
 
@@ -31,9 +29,18 @@ orbital has no dependencies, it should load and run without you doing anything e
 
 ## what are the controls?
 
-encoder 1 chooses the sequence
-encoder 2 changes the pitch/frequency of the notes being played
-encoder 3 changes the beats per minute - you may notice a slight delay/pause when changing, this is on the fix list although... it adds a nice something to the sound so it may be allowed to roam
+enc 1 accesses menu
+
+on menu item 1 and 3
+-- btn 2 randomises selected sequence
+-- enc 2 changes selected sequence pitch
+-- btn 3 starts/stops playback
+-- enc 3 changes selected sequence BPM (each sequence can run at its own BPM)
+
+on menu item 2 and 4
+-- enc 2 changes sequence length (each sequence can have its own number of notes)
+-- enc 3 chooses note (it turns white)
+-- btn 2 held plus enc 3 turned changes selected note pitch
 
 button 2 randomises the sequence
 button 3 starts/stops playback
@@ -46,9 +53,6 @@ does there have to be one?
 
 yes
 
-specifically I want to allow up to four (now two) sequences, each of different lengths and possibly running at different speeds
-i want to get sequence data to load/save from external files
-i want to add a visual sequence builder, possibly on a grid or maybe directly on the circles
 i want to test out more SuperCollider engines and make my own percussion engine
 i want to integrate grid
 
