@@ -1,14 +1,19 @@
 -- orbital
--- alpha version 1.1
+-- version 1.1
 -- p1505
 --
 -- enc 1 accesses menu
 --
--- btn 2 randomises sequence
--- enc 2 changes pitch and sequence length
---
+-- on menu item 1 and 3
+-- btn 2 randomises sequence one
+-- enc 2 changes pitch
 -- btn 3 starts/stops sequence
 -- enc 3 changes BPM
+--
+-- on menu item 2 and 4
+-- enc 2 changes sequence length
+-- enc 3 chooses note
+-- btn 2 held plus enc 3 turned changes selected note pitch
 
 --[[
   hello
@@ -22,21 +27,15 @@
   the code is messy, the capability small
 
   designed for polyperc, but Haven sounds immense
+  play with BPM to make crazy sounding drones
   my own engines are being worked on
 
   orbital has a roadmap, the things still to do are...
-  - add ability to change sequence lengths - done
-  - add ability to manually edit sequences - current
   - add ability to stop circles independantly
   - get loading and saving of sequence data into an external data file
   
   and bugs to fix...
-   - allow user to drop frequency as far as they want, but dont allow negative values - done
-   - same with upper values - done
-   - add variety to circle sizes
-   - ensure ui and audio in sync - current
-
-  only then will orbital be considered release 1
+   - add variety to circle sizes - more of a UI improvement than a bug
 
   please comment, suggest, and tell me where the code is a mess
 
